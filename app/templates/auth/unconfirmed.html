@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}My Blog - Подтверждение аккаунта{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+  <h1>
+    Привет, {{ current_user.username }}!
+  </h1>
+  <h3>Вы досих пор не подтвердили свой аккаунт.</h3>
+  <p>Для получения доступа к сайту Вы должны подвердить Ваш аккаунт.
+    Проверте свою почту, Вам должно было прийти письмо с подтверждением.
+  </p>
+  <p>
+    Нужно еще одно подтверждение на почту?
+    <a href="{{ url_for('auth.resend_confirmation') }}"> Нажмите сюда</a>
+  </p>
+</div>
+{% endblock %}

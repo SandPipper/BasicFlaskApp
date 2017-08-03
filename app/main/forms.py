@@ -5,4 +5,4 @@ from wtforms.validators import Required
 
 class NameForm(FlaskForm):
     name = StringField('Как тебя зовут?', validators=[Required()])
-    submit = SubmitField('Submit')
+    submit = SubmitField('Принять')

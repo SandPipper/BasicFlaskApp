@@ -1,0 +1,10 @@
+<p>Дорогой {{ user.username }}</p>
+
+<p>Для подтверждения своего новго эл. адреса <a
+    href="{{ url_for('auth.change_email', token=token, _external=True) }}">
+    Нажми здесь</a></p>
+
+<p>С уважением,</p>
+<p>команда MyBlog.</p>
+
+<p><small>Ответы по этом адресу не просматриваются.</small></p>

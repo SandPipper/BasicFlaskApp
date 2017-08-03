@@ -4,12 +4,13 @@ import os
 class Config:
 
     SECRET_KEY = os.environ['SECRET_KEY']
-    BLOG_MAIL_SUBJECT_PREFIX = '[Alex Blog]'
-    BLOG_MAIL_SENDER = 'Alex Blog Admin <seerenf4@gmail.com>'
+    BLOG_MAIL_SUBJECT_PREFIX = '[My Blog]'
     BLOG_ADMIN = os.environ['BLOG_ADMIN']
+    BLOG_MAIL_SENDER = 'My Blog Admin {}'.format(BLOG_ADMIN)
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://{}:{}@localhost/?charset=utf8mb4'\
                                .format(os.environ['DB_USERNAME'],
                                        os.environ['DB_PASSWORD'])
+    SQLALCHEMY_TRACK_MODIFICATIONS = True
 
 
     @staticmethod
