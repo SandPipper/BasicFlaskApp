@@ -1,0 +1,26 @@
+{% import "bootstrap/wtf.html" as wtf %}
+{% extends "base.html" %}
+
+
+{% block title %}My Blog - Редактирование Профиля{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <div class="container">
+        <div class="col-md-5">
+            <div class="panel panel-info" >
+                    <div class="panel-heading">
+                        <div class="panel-title">Редактирование профиля</div>
+                    </div>
+                    <div style="padding-top:30px" class="panel-body" >
+
+                        {{ wtf.quick_form(form) }}
+
+                        <br>
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

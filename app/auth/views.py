@@ -10,9 +10,13 @@ from .forms import LoginForm, RegistrationForm, ChangePasswordForm,\
 
 @auth.before_app_request
 def before_request():
-    if current_user.is_authenticated and not current_user.confirmed \
-                                     and request.endpoint[:5] != 'auth.':
-        return redirect(url_for('auth.unconfirmed'))
+    if current_user.is_authenticated:
+        current_user.ping()
+        if not current_user.confirmed \
+                and request.endpoint \
+                and request.endpoint[:5] != 'auth.' \
+                and request.endpoint != 'static':
+            return redirect(url_for('auth.unconfirmed'))
 
 
 @auth.route('/unconfirmed')
@@ -56,7 +60,7 @@ def register():
         send_email(user.email, 'Подтвердите аккаунт', 'auth/email/confirm',
                    user=user, token=token)
         flash('Письмо подтверждения было отправленно Вам на почту.')
-        return redirect(url_for('auth/login'))
+        return redirect(url_for('auth/login.html'))
     return render_template('auth/register.html', form=form)
 
 
@@ -91,7 +95,7 @@ def change_password():
             current_user.password = form.password.data
             db.session.add(current_user)
             db.session.commit()
-            flash('Ваш пароль был изменен.')
+            flash('Ваш пароль был обновлен.')
             return redirect(url_for('main.index'))
         else:
             flash('Неверный пароль.')
@@ -125,7 +129,7 @@ def password_reset(token):
         if user is None:
             return redirect(url_for('main.index'))
         if user.reset_password(token, form.password.data):
-            flash('Ваш пароль был изменен.')
+            flash('Ваш пароль был обновлен.')
             return redirect(url_for('auth.login'))
         else:
             return redirect(url_for('main.index'))
