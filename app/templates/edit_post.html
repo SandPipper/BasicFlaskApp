@@ -1,8 +1,7 @@
-{% import "bootstrap/wtf.html" as wtf %}
 {% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
 
-
-{% block title %}My Blog - Редактирование Профиля{% endblock %}
+{% block title %}My Blog - Редактировать сообщение{% endblock %}
 
 {% block page_content %}
 <div class="page-header">
@@ -11,7 +10,8 @@
             <div class="panel panel-info" >
                     <div class="panel-heading">
                         <div class="panel-title">
-                            <h1>Редактирование профиля</h1></div>
+                            <h1>Редактировать сообщение</h1>
+                        </div>
                     </div>
                     <div style="padding-top:30px" class="panel-body" >
 
@@ -22,6 +22,12 @@
             </div>
         </div>
     </div>
+    <h1></h1>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{{ pagedown.include_pagedown() }}
 {% endblock %}

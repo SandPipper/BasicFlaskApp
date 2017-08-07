@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "_macros.html" as macros %}
 
 {% block title %} My Blog {% endblock %}
 
@@ -8,5 +10,36 @@
     {% else %}Незнакомец{% endif %}!</h1>
   {{ current_time }}
 </div>
+<div>
+    {% if current_user.can(Permission.WRITE_ARTICLES) %}
+    <div class="container">
 
+            <div class="panel panel-info" >
+                    <div class="panel-heading">
+                        <div class="panel-title">
+                            <h1></h1>
+                        </div>
+                    </div>
+                    <div style="padding-top:30px" class="panel-body" >
+
+                        {{ wtf.quick_form(form) }}
+
+                        <br>
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+
+{% include '_posts.html' %}
+<div class="pagination">
+    {{ macros.pagination_widget(pagination, '.index') }}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{{ pagedown.include_pagedown() }}
 {% endblock %}

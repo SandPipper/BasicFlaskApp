@@ -1,4 +1,5 @@
 from flask_wtf import FlaskForm
+from flask_pagedown.fields import PageDownField
 from wtforms import StringField, TextAreaField, SubmitField, BooleanField,\
                     SelectField, ValidationError
 from wtforms.validators import Required, Length, Email, Regexp
@@ -42,3 +43,8 @@ class EditProfileAdminForm(FlaskForm):
         if field.data != self.user.username and \
                 User.query.filter_by(username=field.data).first():
             raise ValidationError('Пользователь с таким именем уже существует.')
+
+
+class PostForm(FlaskForm):
+    body = PageDownField('Что напишешь сегодня?', validators=[Required()])
+    submit = SubmitField('Принять')

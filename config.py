@@ -11,6 +11,7 @@ class Config:
                                .format(os.environ['DB_USERNAME'],
                                        os.environ['DB_PASSWORD'])
     SQLALCHEMY_TRACK_MODIFICATIONS = True
+    BLOG_POSTS_PER_PAGE = 20
 
 
     @staticmethod
