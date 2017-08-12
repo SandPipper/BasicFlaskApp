@@ -12,6 +12,7 @@ class Config:
                                        os.environ['DB_PASSWORD'])
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     BLOG_POSTS_PER_PAGE = 20
+    BLOG_FOLLOWERS_PER_PAGE = 50
 
 
     @staticmethod

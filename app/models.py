@@ -59,6 +59,19 @@ class Post(db.Model):
     body_html = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    votes = db.Column(db.Integer, index=True, default=0)
+    deleted = db.Column(db.Boolean, default=False, index=True)
+
+    def __init__(self, **kwargs):
+        super(Post, self).__init__(**kwargs)
+        if self.votes is None:
+            self.votes = 0
+
+        if self.deleted is None:
+            self.deleted = False
+
+        db.session.add(self)
+        db.session.commit()
 
     def ping(self):
         self.timestamp = datetime.utcnow()
@@ -84,13 +97,27 @@ class Post(db.Model):
     def on_changed_body(target, value, oldvalue, initiator):
         allowed_tags = ['a', 'abbr', 'acronym', 'b', 'blockquote', 'code',
                         'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul',
-                        'h1', 'h2', 'h3', 'p']
+                        'h1', 'h2', 'h3', 'p', 'table', 'tr', 'td', 'th',
+                         'article']
         target.body_html = bleach.linkify(bleach.clean(
             markdown(value, output_format="html"),
             tags=allowed_tags, strip=True))
 
+    def __repr__(self):
+        return "<Post {}, {}, {}, {}>".format(self.id, self.author.name,
+                                              self.body, self.timestamp)
+
 
 db.event.listen(Post.body, 'set', Post.on_changed_body)
+
+
+class Follow(db.Model):
+    __tablename__ = 'follows'
+    follower_id = db.Column(db.Integer, db.ForeignKey('users.id'),
+                            primary_key=True)
+    followed_id = db.Column(db.Integer, db.ForeignKey('users.id'),
+                            primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class User(UserMixin, db.Model):
@@ -109,6 +136,16 @@ class User(UserMixin, db.Model):
     last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
     avatar_hash = db.Column(db.String(32))
     posts = db.relationship('Post', backref='author', lazy='dynamic')
+    followed = db.relationship('Follow',
+                                foreign_keys=[Follow.follower_id],
+                                backref=db.backref('follower', lazy='joined'),
+                                lazy='dynamic',
+                                cascade='all, delete-orphan')
+    followers = db.relationship('Follow',
+                                foreign_keys=[Follow.followed_id],
+                                backref = db.backref('followed', lazy='joined'),
+                                lazy='dynamic',
+                                cascade='all, delete-orphan')
 
     @staticmethod
     def generate_fake(count=100):
@@ -132,8 +169,17 @@ class User(UserMixin, db.Model):
             except IntegrityError:
                 db.session.rollback()
 
+    @staticmethod
+    def add_self_follows():
+        for user in User.query.all():
+            if not user.is_following(user):
+                user.follow(user)
+                db.session.add(user)
+                db.session.commit()
+
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
+        self.follow(self)
         if self.role is None:
             if self.email == current_app.config['BLOG_ADMIN']:
                 self.role = Role.query.filter_by(permissions=0xff).first()
@@ -235,6 +281,31 @@ class User(UserMixin, db.Model):
             self.email.encode('utf-8')).hexdigest()
         return '{url}/{hash}?s={size}&d={default}&r={rating}'.format(url=url,
                 hash=hash, size=size, default=default, rating=rating)
+
+    def follow(self, user):
+        if not self.is_following(user):
+            f = Follow(follower=self, followed=user)
+            db.session.add(f)
+            db.session.commit()
+
+    def unfollow(self, user):
+        f = self.followed.filter_by(followed_id=user.id).first()
+        if f:
+            db.session.delete(f)
+            db.session.commit()
+
+    def is_following(self, user):
+        return self.followed.filter_by(
+            followed_id=user.id).first() is not None
+
+    def is_followed_by(self, user):
+        return self.followers.filter_by(
+            follower_id=user.id).first() is not None
+
+    @property
+    def followed_posts(self):
+        return Post.query.join(Follow, Follow.followed_id == Post.author_id)\
+            .filter(Follow.follower_id == self.id)
 
     def __repr__(self):
         return "<User {}, {}, {}>".format(self.username, self.email,

@@ -5,6 +5,7 @@
 {% block head %}
 {{ super() }}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/myblog.css') }}">
+
 {% endblock %}
 
 {% block navbar %}
@@ -71,5 +72,8 @@
 
 {% block scripts %}
 {{ super() }}
+<script src="{{ url_for('static', filename='js/post_delete.js') }}"></script>
 {{ moment.include_moment() }}
+{{ moment.lang('ru') }}
+
 {% endblock %}
