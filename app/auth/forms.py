@@ -8,7 +8,7 @@ from ..models import User
 class LoginForm(FlaskForm):
     email = StringField('Эл. адрес', validators=[Required(), Length(1, 64),
                                         Email("Недопустимый Эл. адрес!")])
-    password = PasswordField('Пароль', validators=[Required()])
+    password = PasswordField('Пароль', validators=[Required(), Length(8, 64)])
     remember_me = BooleanField('Запомнить меня')
     submit = SubmitField('Войти')
 
@@ -16,10 +16,10 @@ class LoginForm(FlaskForm):
 class RegistrationForm(FlaskForm):
     email = StringField('Эл. адрес', validators=[Required(), Length(1, 64),
                                         Email("Недопустимый Эл. адрес!")])
-    username = StringField('Имя', validators=[Required(), Length(1, 64),
+    username = StringField('Имя', validators=[Required(), Length(3, 64),
                 Regexp('^[A-Za-zА-Яа-я][A-Za-z0-9_.А-Яа-я0-9_.]*$', 0,
         'Имя должно содержать только буквы, цифры, точки или подчеркивания.')])
-    password = PasswordField('Пароль', validators=[Required(),
+    password = PasswordField('Пароль', validators=[Required(), Length(8, 64),
                     EqualTo('password2', message="Пароли должны совпадать.")])
     password2 = PasswordField('Подтвердите пароль', validators=[Required()])
     submit = SubmitField('Регистрация')
@@ -36,6 +36,7 @@ class RegistrationForm(FlaskForm):
 class ChangePasswordForm(FlaskForm):
     old_password = PasswordField('Старый пароль', validators=[Required()])
     password = PasswordField('Новый пароль', validators=[Required(),
+                                                         Length(8, 64),
                     EqualTo('password2', message='Пароли должны совпадать.')])
     password2 = PasswordField('Подтвердите новый пароль',
                               validators=[Required()])
@@ -52,6 +53,7 @@ class PasswordResetForm(FlaskForm):
     email = StringField('Эл. адрес', validators=[Required(), Length(1, 64),
                                             Email("Недопустимый Эл. адрес!")])
     password = PasswordField('Новый Пароль', validators=[Required(),
+                                                         Length(8, 64),
                     EqualTo('password2', message='Пароли должны совпадать.')])
     password2 = PasswordField('Подтвердите пароль', validators=[Required()])
     submit = SubmitField('Сбросить пароль')
@@ -64,7 +66,7 @@ class PasswordResetForm(FlaskForm):
 class ChangeEmailForm(FlaskForm):
     email = StringField('Новый эл. адрес', validators=[Required(),
                         Length(1, 64), Email("Недопустимый Эл. адрес!")])
-    password = PasswordField('Пароль', validators=[Required])
+    password = PasswordField('Пароль', validators=[Required(), Length(8, 64)])
     submit = SubmitField('Изменить эл. адрес')
 
     def validate_email(self, field):

@@ -60,6 +60,8 @@ class Post(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     votes = db.Column(db.Integer, index=True, default=0)
+    comments = db.relationship('Comment', backref='post', lazy='dynamic')
+    vote = db.relationship('Vote_post', backref='post', lazy="dynamic")
     deleted = db.Column(db.Boolean, default=False, index=True)
 
     def __init__(self, **kwargs):
@@ -95,13 +97,13 @@ class Post(db.Model):
 
     @staticmethod
     def on_changed_body(target, value, oldvalue, initiator):
-        allowed_tags = ['a', 'abbr', 'acronym', 'b', 'blockquote', 'code',
-                        'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul',
+        allowed_tags = ['a', 'abbr', 'acronym', 'b', 'blockquote', 'br',
+                        'code', 'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul',
                         'h1', 'h2', 'h3', 'p', 'table', 'tr', 'td', 'th',
                          'article']
         target.body_html = bleach.linkify(bleach.clean(
             markdown(value, output_format="html"),
-            tags=allowed_tags, strip=True))
+                tags=allowed_tags, strip=True))
 
     def __repr__(self):
         return "<Post {}, {}, {}, {}>".format(self.id, self.author.name,
@@ -109,6 +111,56 @@ class Post(db.Model):
 
 
 db.event.listen(Post.body, 'set', Post.on_changed_body)
+
+
+class Comment(db.Model):
+    __tablename__ = 'comments'
+    id = db.Column(db.Integer, primary_key=True)
+    body = db.Column(db.Text)
+    body_html = db.Column(db.Text)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    edit_timestamp = db.Column(db.DateTime, index=True)
+    edit_by = db.Column(db.String(64))
+    disabled = db.Column(db.Boolean)
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.id'))
+    vote = db.relationship('Vote_comment', backref='comment', lazy="dynamic")
+    deleted = db.Column(db.Boolean, index=True, default=False)
+
+    @staticmethod
+    def on_changed_body(target, value, oldvalue, initiator):
+        allowed_tags = ['a', 'abbr', 'acronym', 'b', 'code', 'em', 'i',
+                        'strong']
+        target.body_html = bleach.linkify(bleach.clean(
+            markdown(value, output_format='html'),
+            tags=allowed_tags, strip=True))
+
+    def edit_ping(self, username):
+        self.edit_timestamp = datetime.utcnow()
+        self.edit_by = username
+        db.session.add(self)
+        db.session.commit()
+
+
+db.event.listen(Comment.body, 'set', Comment.on_changed_body)
+
+
+class Vote_comment(db.Model):
+    __tablename__ = 'vote_comments'
+    id = db.Column(db.Integer, primary_key=True)
+    vote = db.Column(db.Integer, index=True, default=0)
+    voter_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    comment_id = db.Column(db.Integer, db.ForeignKey('comments.id'))
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class Vote_post(db.Model):
+    __tablename__ = 'vote_posts'
+    id = db.Column(db.Integer, primary_key=True)
+    vote = db.Column(db.Integer, index=True, default=0)
+    voter_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.id'))
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class Follow(db.Model):
@@ -146,6 +198,9 @@ class User(UserMixin, db.Model):
                                 backref = db.backref('followed', lazy='joined'),
                                 lazy='dynamic',
                                 cascade='all, delete-orphan')
+    comments = db.relationship('Comment', backref='author', lazy='dynamic')
+    vote_comments = db.relationship('Vote_comment', backref='voter', lazy='dynamic')
+    vote_posts = db.relationship('Vote_post', backref='voter', lazy='dynamic')
 
     @staticmethod
     def generate_fake(count=100):
@@ -179,7 +234,7 @@ class User(UserMixin, db.Model):
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
-        self.follow(self)
+
         if self.role is None:
             if self.email == current_app.config['BLOG_ADMIN']:
                 self.role = Role.query.filter_by(permissions=0xff).first()
@@ -189,6 +244,7 @@ class User(UserMixin, db.Model):
         if self.email is not None and self.avatar_hash is None:
             self.avatar_hash = hashlib.md5(
                 self.email.encode('utf-8')).hexdigest()
+        self.followed.append(Follow(followed=self))
         db.session.commit()
 
     def can(self, permissions):
@@ -302,9 +358,15 @@ class User(UserMixin, db.Model):
         return self.followers.filter_by(
             follower_id=user.id).first() is not None
 
+    def is_vote(self, comment):
+        return Comment.query.filter_by(deleted=False, id=comment.id).join(Vote_comment,
+        Vote_comment.comment_id == Comment.id).filter(Vote_comment.voter_id == self.id)
+
+
     @property
     def followed_posts(self):
-        return Post.query.join(Follow, Follow.followed_id == Post.author_id)\
+        return Post.query.filter_by(deleted=False).join(Follow,
+            Follow.followed_id == Post.author_id) \
             .filter(Follow.follower_id == self.id)
 
     def __repr__(self):

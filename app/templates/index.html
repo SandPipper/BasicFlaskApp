@@ -37,7 +37,7 @@
         <a href="{{ url_for('.show_all') }}">Все</a></li>
         {% if current_user.is_authenticated %}
         <li{% if show_followed %} class="active"{% endif %}>
-        <a href="{{ url_for('.show_followed') }}">Подписчики</a></li>
+        <a href="{{ url_for('.show_followed') }}">Подписки</a></li>
         {% endif %}
     </ul>
 {% include '_posts.html' %}

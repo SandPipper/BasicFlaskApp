@@ -1,10 +1,11 @@
 from flask import render_template, flash, redirect, url_for, request, \
                   current_app, abort, jsonify, make_response
 from . import main
-from ..models import User, Role, Permission, Post
+from ..models import User, Role, Permission, Post, Comment, Vote_comment, \
+                     Vote_post
 from .. import db
 from ..decorators import admin_required, permission_required
-from .forms import EditProfileForm, EditProfileAdminForm, PostForm
+from .forms import EditProfileForm, EditProfileAdminForm, PostForm, CommentForm
 from datetime import datetime
 from flask_login import login_required, current_user
 
@@ -31,8 +32,10 @@ def index():
         page, per_page=current_app.config['BLOG_POSTS_PER_PAGE'],
         error_out=False)
     posts = pagination.items
+    post_votes = Vote_post.query
     return render_template('index.html', form=form, posts=posts,
-                            pagination=pagination, show_followed=show_followed)
+                            pagination=pagination, show_followed=show_followed,
+                            post_votes=post_votes)
 
 
 @main.route('/user/<username>')
@@ -44,8 +47,9 @@ def user(username):
         page, per_page=current_app.config['BLOG_POSTS_PER_PAGE'],
         error_out=False)
     posts = pagination.items
+    post_votes = Vote_post.query
     return render_template('user.html', user=user, posts=posts,
-                           pagination=pagination)
+                           pagination=pagination, post_votes=post_votes)
 
 
 @main.route('/edit_profile', methods=['GET', 'POST'])
@@ -94,12 +98,35 @@ def edit_profile_admin(id):
     return render_template('edit_profile.html', form=form, user=user)
 
 
-@main.route('/post/<int:id>')
+@main.route('/post/<int:id>', methods=['GET', 'POST'])
 def post(id):
     post = Post.query.filter_by(id=id, deleted=False).first_or_404()
-    return render_template('post.html', posts=[post])
+    form = CommentForm()
+    if form.validate_on_submit():
+        comment = Comment(body=form.body.data,
+                          post=post,
+                          author=current_user._get_current_object())
+        db.session.add(comment)
+        db.session.commit()
+        flash('Ваш комментарий опубликован.')
+        return redirect(url_for('.post', id=post.id, page=-1))
+    page = request.args.get('page', 1, type=int)
+    if page == -1:
+        page = (post.comments.count() - 1) // \
+                current_app.config['BLOG_COMMENTS_PER_PAGE'] + 1
+    pagination = post.comments.filter_by(deleted=False) \
+                     .order_by(Comment.timestamp.asc()).paginate(
+                 page, per_page=current_app.config['BLOG_COMMENTS_PER_PAGE'],
+                 error_out=False)
+    comments = pagination.items
+    comment_votes = Vote_comment.query
+    post_votes = Vote_post.query
+    return render_template('post.html', posts=[post], form=form,
+                           comments=comments, pagination=pagination,
+                           comment_votes=comment_votes, post_votes=post_votes)
 
-
+@login_required
+@permission_required(Permission.WRITE_ARTICLES)
 @main.route('/post_remove/<int:id>', methods=['PUT', 'DELETE'])
 def post_remove(id):
     data = {'status': 0, 'message': 'Error'}
@@ -120,6 +147,7 @@ def post_remove(id):
 
 @main.route('/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
+@permission_required(Permission.WRITE_ARTICLES)
 def edit(id):
     post = Post.query.filter_by(id=id, deleted=False).first_or_404()
     if current_user != post.author and \
@@ -134,6 +162,94 @@ def edit(id):
         return redirect(url_for('.post', id=post.id))
     form.body.data = post.body
     return render_template('edit_post.html', form=form)
+
+
+@main.route('/comment_edit/<int:id>', methods=['PUT'])
+@login_required
+@permission_required(Permission.WRITE_ARTICLES)
+def edit_comment(id):
+    comment = Comment.query.filter_by(id=id, deleted=False).first_or_404()
+    data = {'status': 0, 'message': 'invalid comment'}
+    if comment:
+        comment.edit_ping(current_user.username)
+        comment.body_html = request.form['data']
+        db.session.add(comment)
+        db.session.commit()
+        data = {'status': 1, 'message': 'Comment edited'}
+    return jsonify(data)
+
+
+@main.route('/comment_vote/', methods=['POST'])
+@login_required
+@permission_required(Permission.COMMENT)
+def comment_vote():
+    data = {'status': 0, 'message': 'Invalid method: {}'.format(request.method)}
+    if request.method == 'POST':
+        comment_vote = Vote_comment.query.filter_by(
+            comment_id=request.form['comment'], voter_id=current_user.id).first()
+        if comment_vote:
+            comment_vote.vote = request.form['vote']
+            db.session.add(comment_vote)
+            db.session.commit()
+            data = {'status': 1, 'message': 'User id {} re-voted comment id {}'
+                .format(current_user.id,
+                        request.form['comment'])}
+        else:
+            comment_vote = Vote_comment(vote=request.form['vote'],
+                                        voter=current_user,
+                                        comment_id=request.form['comment'])
+            db.session.add(comment_vote)
+            db.session.commit()
+            data = {'status': 1, 'message': 'User id {} voted comment id {}'
+                .format(current_user.id,
+                        request.form['comment'])}
+    return jsonify(data)
+
+
+@main.route('/post_vote/', methods=['POST'])
+@login_required
+@permission_required(Permission.WRITE_ARTICLES)
+def post_vote():
+    data = {'status': 0, 'message': 'Invalid method: {}'.format(request.method)}
+    if request.method == 'POST':
+        post_vote = Vote_post.query.filter_by(
+            post_id=request.form['post'], voter_id=current_user.id).first()
+        if post_vote:
+            post_vote.vote = request.form['vote']
+
+            data = {'status': 1, 'message': 'User id {} re-voted post id {}'
+                .format(current_user.id,
+                        request.form['post'])}
+        else:
+            post_vote = Vote_post(vote=request.form['vote'],
+                                        voter=current_user,
+                                        post_id=request.form['post'])
+            data = {'status': 1, 'message': 'User id {} voted post id {}'
+                .format(current_user.id,
+                        request.form['post'])}
+        db.session.add(post_vote)
+        db.session.commit()
+    return jsonify(data)
+
+
+@login_required
+@permission_required(Permission.WRITE_ARTICLES)
+@main.route('/comment_remove/<int:id>', methods=['PUT', 'DELETE'])
+def comment_remove(id):
+    data = {'status': 0, 'message': 'Error'}
+    comment = Comment.query.filter_by(id=id).first()
+    if comment:
+        if request.method == 'PUT':
+            comment.deleted = False
+            data = {'status': 2, 'message': 'Comment restored'}
+        elif request.method == 'DELETE':
+            comment.deleted = True
+            data = {'status': 1, 'message': 'Comment removed'}
+        db.session.add(comment)
+        db.session.commit()
+    else:
+        data = {'status': 3, 'message': 'Invalid user'}
+    return jsonify(data)
 
 
 @main.route('/follow/<username>')
@@ -216,3 +332,42 @@ def show_followed():
     resp = make_response(redirect(url_for('.index')))
     resp.set_cookie('show_followed', '1', max_age=30*24*60*60)
     return resp
+
+
+@main.route('/moderate')
+@login_required
+@permission_required(Permission.MODERATE_COMMENTS)
+def moderate():
+    page = request.args.get('page', 1, type=int)
+    pagination = Comment.query.filter_by(deleted=False).order_by(Comment.timestamp.desc()).paginate(
+        page, per_page=current_app.config['BLOG_COMMENTS_PER_PAGE'],
+        error_out=False)
+    comments = pagination.items
+    comment_votes = Vote_comment.query
+    return render_template('moderate.html', comments=comments,
+                            pagination=pagination, page=page,
+                            comment_votes=comment_votes)
+
+
+@main.route('/moderate/enable/<int:id>')
+@login_required
+@permission_required(Permission.MODERATE_COMMENTS)
+def moderate_enable(id):
+    comment = Comment.query.get_or_404(id)
+    comment.disabled = False
+    db.session.add(comment)
+    db.session.commit()
+    return redirect(url_for('.moderate',
+                            page=request.args.get('page', 1, type=int)))
+
+
+@main.route('/moderate/disabled/<int:id>')
+@login_required
+@permission_required(Permission.MODERATE_COMMENTS)
+def moderate_disabled(id):
+    comment = Comment.query.get_or_404(id)
+    comment.disabled = True
+    db.session.add(comment)
+    db.session.commit()
+    return redirect(url_for('.moderate',
+                            page=request.args.get('page', 1, type=int)))

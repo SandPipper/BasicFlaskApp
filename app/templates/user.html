@@ -27,7 +27,8 @@
 
     <p>Зарегистрирован {{ moment(user.member_since).format('L') }}.
     Последний раз был {{ moment(user.last_seen).fromNow() }}.</p>
-    <p>{{ user.posts.filter_by(deleted=False).count() }} блог постов.</p>
+    <p>{{ user.posts.filter_by(deleted=False).count() }} блог постов.
+        {{ user.comments.filter_by(deleted=False).count() }} комментарии.</p>
     <p>
         {% if current_user.can(Permission.FOLLOW) and user != current_user %}
             {% if not current_user.is_following(user) %}

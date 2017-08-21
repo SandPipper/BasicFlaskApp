@@ -1,0 +1,101 @@
+<ul class="comments">
+    {% for comment in comments %}
+    <li class="comment">
+        <div class="comment-data" data-id="{{ comment.id }}"
+            data-user="{{ current_user }}">
+        <div class="comment-thumbnail">
+            <a href="{{ url_for('.user', username=comment.author.username) }}">
+                <img class="img-rounded profile-thumbnail"
+                    src="{{ comment.author.gravatar(size=40) }}">
+            </a>
+        </div>
+        <div class="comment-content">
+            <div class="comment-date">
+                {% if comment.edit_timestamp %}
+                 Изменен {{ moment(comment.edit_timestamp).fromNow() }}
+                {% else %}
+                {{ moment(comment.timestamp).fromNow() }}
+                {% endif %}
+            </div>
+            <div class="comment-author">
+                <a href="{{ url_for('.user', username=comment.author.username) }}">
+                    {{ comment.author.username }}</a></div>
+            <div class="comment-body" name=data>
+                {% if comment.disabled %}
+                <p></p><i>Этот комментарий был отключен модератором.</i></p>
+                {% endif %}
+                {% if moderate or not comment.disabled %}
+                    {% if comment.body_html %}
+                        {{ comment.body_html | safe }}
+                    {% else %}
+                        {{ comment.body }}
+                    {% endif %}
+                {% endif %}
+            </div>
+            {% if moderate %}
+            <br>
+            {% if comment.disabled %}
+            <a class="btn btn-default btn-xs" href="{{ url_for('.moderate_enable',
+                id=comment.id, page=page) }}">Разрешить</a>
+            {% else %}
+            <a class="btn btn-danger btn-xs" href="{{ url_for('.moderate_disabled',
+                id=comment.id, page=page) }}">Запретить</a>
+            {% endif %}
+        {% endif %}
+        <div class="comment-footer">
+            {% if current_user.is_authenticated %}
+                {% if current_user != comment.author %}
+                    {% if comment_votes.filter_by(comment_id=comment.id,
+                                          voter=current_user)
+                               .first().vote == 1 %}
+    <label class="label label-success glyphicon glyphicon-thumbs-up comment-vote-up voted-up">
+    {{ comment_votes.filter_by(comment_id=comment.id, vote=1).count() }}</label>
+        <label class="label label-danger glyphicon glyphicon-thumbs-down comment-vote-down">
+    {{ -comment_votes.filter_by(comment_id=comment.id, vote=-1).count() }}</label>
+
+                    {% elif comment_votes.filter_by(comment_id=comment.id,
+                                            voter=current_user)
+                                 .first().vote == -1 %}
+            <label class="label label-success glyphicon glyphicon-thumbs-up comment-vote-up">
+    {{ comment_votes.filter_by(comment_id=comment.id, vote=1).count() }}</label>
+<label class="label label-danger glyphicon glyphicon-thumbs-down comment-vote-down voted-down">
+    {{ -comment_votes.filter_by(comment_id=comment.id, vote=-1).count() }}</label>
+
+                    {% else %}
+            <label class="label label-success glyphicon glyphicon-thumbs-up comment-vote-up">
+    {{ comment_votes.filter_by(comment_id=comment.id, vote=1).count() }}</label>
+            <label class="label label-danger glyphicon glyphicon-thumbs-down comment-vote-down">
+    {{ -comment_votes.filter_by(comment_id=comment.id, vote=-1).count() }}</label>
+                    {% endif %}
+                {% else %}
+            <label class="label label-success glyphicon glyphicon-thumbs-up">
+    {{ comment_votes.filter_by(comment_id=comment.id, vote=1).count() }}</label>
+            <label class="label label-danger glyphicon glyphicon-thumbs-down">
+    {{ -comment_votes.filter_by(comment_id=comment.id, vote=-1).count() }}</label>
+                {% endif %}
+            {% endif %}
+
+
+            {% if current_user == comment.author and not comment.disabled %}
+            <label class="for-comment-edit label label-primary label-xs">
+                Редактировать
+            </label>
+            <label class="for-comment-del label label-danger label-xs">
+                Удалить
+            </label>
+
+            {% elif current_user.is_administrator() %}
+            <label class="for-comment-edit label label-danger label-xs">
+                Редактировать [Админ]
+            </label>
+            <label class="for-comment-del label label-danger label-xs">
+                Удалить [Админ]
+            </label>
+
+            {% endif %}
+        </div>
+    </div>
+    </div>
+    </li>
+    {% endfor %}
+</ul>

@@ -28,6 +28,8 @@ def unconfirmed():
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
@@ -49,6 +51,8 @@ def logout():
 
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
     form = RegistrationForm()
     if form.validate_on_submit():
         user = User(email=form.email.data,
@@ -60,7 +64,7 @@ def register():
         send_email(user.email, 'Подтвердите аккаунт', 'auth/email/confirm',
                    user=user, token=token)
         flash('Письмо подтверждения было отправленно Вам на почту.')
-        return redirect(url_for('auth/login.html'))
+        return redirect(url_for('.login'))
     return render_template('auth/register.html', form=form)
 
 

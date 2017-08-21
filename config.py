@@ -13,6 +13,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     BLOG_POSTS_PER_PAGE = 20
     BLOG_FOLLOWERS_PER_PAGE = 50
+    BLOG_COMMENTS_PER_PAGE = 30
 
 
     @staticmethod

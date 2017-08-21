@@ -48,3 +48,8 @@ class EditProfileAdminForm(FlaskForm):
 class PostForm(FlaskForm):
     body = PageDownField('Что напишешь сегодня?', validators=[Required()])
     submit = SubmitField('Принять')
+
+
+class CommentForm(FlaskForm):
+    body = StringField('', validators=[Required()])
+    submit = SubmitField('Принять')
