@@ -34,7 +34,13 @@
 
             </div>
             <div class="post-footer">
+                <div class="glyphicons">
                 {% if current_user.is_authenticated %}
+                {% if current_user.is_post_stared(post.id) %}
+<label class="glyphicon glyphicon-star stared"> </label>
+                {% else %}
+    <label class="glyphicon glyphicon-star"> </label>
+                {% endif %}
                     {% if current_user != post.author %}
                         {% if post_votes.filter_by(post_id=post.id,
                                               voter=current_user)
@@ -65,14 +71,21 @@
             {{ -post_votes.filter_by(post_id=post.id, vote=-1).count() }}</label>
                     {% endif %}
                 {% endif %}
-
+            </div>
                 <a href="{{ url_for('.post', id=post.id) }}">
                     <span class="label label-info">Постоянная ссылка</span>
                 </a>
                 <a href="{{ url_for('.post', id=post.id) }}#comments">
                     <span class="label label-primary">
-                        {{ post.comments.filter_by(deleted=False).count() }}
-                        Комментарии</span>
+                            {{ post.comments.filter_by(deleted=False).count() }}
+                            {% if post.comments.filter_by(deleted=False).count() == 1 %}
+                            комментарий</span>
+                            {% elif post.comments.filter_by(deleted=False).count() >= 2 and
+                            post.comments.filter_by(deleted=False).count() <= 4 %}
+                            комментария</span>
+                            {% else %}
+                            комментариев</span>
+                            {% endif %}
                     </a>
                 {% if current_user == post.author %}
                 <a href="{{ url_for('.edit', id=post.id) }}">

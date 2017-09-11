@@ -5,6 +5,9 @@
 {% block head %}
 {{ super() }}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/myblog.css') }}">
+<!-- <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script> -->
+<!-- <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script> -->
+
 
 {% endblock %}
 
@@ -81,6 +84,7 @@
 <script src="{{ url_for('static', filename='js/comment_edit.js') }}"></script>
 <script src="{{ url_for('static', filename='js/comment_vote.js') }}"></script>
 <script src="{{ url_for('static', filename='js/post_vote.js') }}"></script>
+<script src="{{ url_for('static', filename='js/post_favorite.js') }}"></script>
 {{ moment.include_moment() }}
 {{ moment.lang('ru') }}
 

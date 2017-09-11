@@ -1,3 +1,4 @@
+
 $('label.comment-vote-up').on('click', function() {
     if ($(this).hasClass('voted-up')) {
         $(this).text("  " + (parseInt($(this).text(), 10) - 1).toString(10));
@@ -62,4 +63,66 @@ $('label.comment-vote-down').on('click', function() {
             console.log(data);
         }
     });
+});
+
+
+function forMess(mess) {
+    var voters = "";
+    for (voter in mess.message) {
+        voters += "<tr><td>" + voter + "</td></tr>";
+    }
+    console.log(voters);
+    return voters;
+};
+
+$('label.glyphicon-thumbs-up.comment').hover(function() {
+    var mess = {}
+    var ths = this
+
+    $.ajax({
+        type: 'POST',
+        url: '/voters/',
+        data:  {
+            'comment': $(this).parents('div.comment-data').attr('data-id'),
+            'vote': 1
+        },
+        success: function(data) {
+            console.log(data);
+            mess = data;
+            $(ths).attr({rel: "tooltip","html": "true",
+                         "title": "<b>" + forMess(mess) + "</b>"});
+        }
+    });
+},
+function() {
+    console.log("Mouse leave");
+});
+
+$('label.glyphicon-thumbs-down.comment').hover(function() {
+    var mess = {}
+    var ths = this
+
+    $.ajax({
+        type: 'POST',
+        url: '/voters/',
+        data:  {
+            'comment': $(this).parents('div.comment-data').attr('data-id'),
+            'vote': -1
+        },
+        success: function(data) {
+            console.log(data);
+            mess = data;
+            $(ths).attr({rel: "tooltip",
+                title: "<b>" + forMess(mess) + "</b>"});
+            //$(ths).tooltip({"data-original-title": "<b>" + forMess(mess) + "</b>",
+                            //  animation: true,
+                            //  html: true});
+
+        }
+
+    });
+
+},
+function() {
+    console.log("Mouse leave");
 });

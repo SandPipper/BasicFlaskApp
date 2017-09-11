@@ -2,6 +2,16 @@
 {% import "bootstrap/wtf.html" as wtf %}
 {% import "_macros.html" as macros %}
 
+{% block head %}
+{{ super() }}
+<style type="text/css">
+div.post-body {
+    height: 100%;
+    overflow: visible;
+}
+</style>
+{% endblock %}
+
 {% block title %}My Blog - Пост{% endblock %}
 
 {% block page_content %}

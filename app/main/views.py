@@ -2,7 +2,7 @@ from flask import render_template, flash, redirect, url_for, request, \
                   current_app, abort, jsonify, make_response
 from . import main
 from ..models import User, Role, Permission, Post, Comment, Vote_comment, \
-                     Vote_post
+                     Vote_post, Favorites_post
 from .. import db
 from ..decorators import admin_required, permission_required
 from .forms import EditProfileForm, EditProfileAdminForm, PostForm, CommentForm
@@ -33,23 +33,33 @@ def index():
         error_out=False)
     posts = pagination.items
     post_votes = Vote_post.query
+    post_favorites = Favorites_post.query
     return render_template('index.html', form=form, posts=posts,
                             pagination=pagination, show_followed=show_followed,
-                            post_votes=post_votes)
+                            post_votes=post_votes, post_favorites=post_favorites)
 
 
 @main.route('/user/<username>')
 def user(username):
     user = User.query.filter_by(username=username).first_or_404()
     page = request.args.get('page', 1, type=int)
-    pagination = user.posts.filter_by(deleted=False) \
-                           .order_by(Post.timestamp.desc()).paginate(
+    show_stared_post = False
+    if current_user.is_authenticated and user == current_user:
+        show_stared_post = bool(request.cookies.get('show_stared_post', ''))
+    if show_stared_post and user == current_user:
+        query = current_user.stared_posts
+    else:
+        query = user.posts.filter_by(deleted=False)
+    pagination = query.order_by(Post.timestamp.desc()).paginate(
         page, per_page=current_app.config['BLOG_POSTS_PER_PAGE'],
         error_out=False)
     posts = pagination.items
     post_votes = Vote_post.query
+    post_favorites = Favorites_post.query
     return render_template('user.html', user=user, posts=posts,
-                           pagination=pagination, post_votes=post_votes)
+                           pagination=pagination, post_votes=post_votes,
+                           post_favorites=post_favorites,
+                           show_stared_post=show_stared_post)
 
 
 @main.route('/edit_profile', methods=['GET', 'POST'])
@@ -121,9 +131,11 @@ def post(id):
     comments = pagination.items
     comment_votes = Vote_comment.query
     post_votes = Vote_post.query
+    post_favorites = Favorites_post.query
     return render_template('post.html', posts=[post], form=form,
                            comments=comments, pagination=pagination,
-                           comment_votes=comment_votes, post_votes=post_votes)
+                           comment_votes=comment_votes, post_votes=post_votes,
+                           post_favorites=post_favorites)
 
 @login_required
 @permission_required(Permission.WRITE_ARTICLES)
@@ -162,6 +174,51 @@ def edit(id):
         return redirect(url_for('.post', id=post.id))
     form.body.data = post.body
     return render_template('edit_post.html', form=form)
+
+
+@main.route('/post_vote/', methods=['POST'])
+@login_required
+@permission_required(Permission.WRITE_ARTICLES)
+def post_vote():
+    data = {'status': 0, 'message': 'Invalid method: {}'.format(request.method)}
+    if request.method == 'POST':
+        post_vote = Vote_post.query.filter_by(
+            post_id=request.form['post'], voter_id=current_user.id).first()
+        if post_vote:
+            post_vote.vote = request.form['vote']
+
+            data = {'status': 1, 'message': 'User id {} re-voted post id {}'
+                .format(current_user.id,
+                        request.form['post'])}
+        else:
+            post_vote = Vote_post(vote=request.form['vote'],
+                                        voter=current_user,
+                                        post_id=request.form['post'])
+            data = {'status': 1, 'message': 'User id {} voted post id {}'
+                .format(current_user.id,
+                        request.form['post'])}
+        db.session.add(post_vote)
+        db.session.commit()
+    return jsonify(data)
+
+
+@main.route('/post_star/', methods=['POST'])
+@login_required
+@permission_required(Permission.WRITE_ARTICLES)
+def post_star():
+    data = {'status': 0, 'message': 'Invalid method: {}'.format(request.method)}
+    if request.method == 'POST':
+        post = request.form['post']
+        if current_user.is_post_stared(post):
+            current_user.unfavorite_post(post)
+            data = {'status': 2, 'message': '{} unstared {}'.format(
+                current_user.username, post)}
+
+        elif not current_user.is_post_stared(post):
+            current_user.favorite_post(post)
+            data ={'status': 1, 'message': '{} stared {}'.format(
+                current_user.username, post)}
+    return jsonify(data)
 
 
 @main.route('/comment_edit/<int:id>', methods=['PUT'])
@@ -206,30 +263,27 @@ def comment_vote():
     return jsonify(data)
 
 
-@main.route('/post_vote/', methods=['POST'])
-@login_required
-@permission_required(Permission.WRITE_ARTICLES)
-def post_vote():
-    data = {'status': 0, 'message': 'Invalid method: {}'.format(request.method)}
+@main.route('/voters/', methods=['POST'])
+def voters():
+    data = {'status': 0, 'message': 'Invlaid method: {}'.format(request.method)}
     if request.method == 'POST':
-        post_vote = Vote_post.query.filter_by(
-            post_id=request.form['post'], voter_id=current_user.id).first()
-        if post_vote:
-            post_vote.vote = request.form['vote']
+        message = []
+        if request.form['vote'] == "1":
+            comment_voters = Vote_comment.query.filter_by(
+                comment_id=request.form['comment'], vote=1).all()
+            for voter in comment_voters:
+                message.append(voter.voter_id)
+        elif request.form['vote'] == "-1":
+            comment_voters = Vote_comment.query.filter_by(
+                comment_id=request.form['comment'], vote=-1).all()
+            for voter in comment_voters:
+                message.append(voter.voter_id)
+        elif request.form['post_up']:
+            pass
 
-            data = {'status': 1, 'message': 'User id {} re-voted post id {}'
-                .format(current_user.id,
-                        request.form['post'])}
-        else:
-            post_vote = Vote_post(vote=request.form['vote'],
-                                        voter=current_user,
-                                        post_id=request.form['post'])
-            data = {'status': 1, 'message': 'User id {} voted post id {}'
-                .format(current_user.id,
-                        request.form['post'])}
-        db.session.add(post_vote)
-        db.session.commit()
+        data = {'status': 1, 'message': message}
     return jsonify(data)
+
 
 
 @login_required
@@ -301,6 +355,13 @@ def followers(username):
                            follows=follows)
 
 
+@main.route('/show_vote/')
+def show_vote():
+    comment_vote = Vote_comment.query.filter_by(id=request.form('comment_id')).all()
+    data = {'status': 0, 'message': comment_vote}
+    return jsonify(data)
+
+
 @main.route('/followed-by/<username>')
 def followed_by(username):
     user = User.query.filter_by(username=username).first()
@@ -331,6 +392,23 @@ def show_all():
 def show_followed():
     resp = make_response(redirect(url_for('.index')))
     resp.set_cookie('show_followed', '1', max_age=30*24*60*60)
+    return resp
+
+
+@main.route('/all_user_posts/<username>')
+@login_required
+def show_all_user_posts(username):
+    resp = make_response(redirect(url_for('.user', username=username)))
+    resp.set_cookie('show_stared_post', '', max_age=30*24*60*60)
+    return resp
+
+
+@main.route('/stared_posts')
+@login_required
+def show_stared_post():
+    resp = make_response(redirect(url_for('.user',
+                                          username=current_user.username)))
+    resp.set_cookie('show_stared_post', '1', max_age=30*24*60*60)
     return resp
 
 

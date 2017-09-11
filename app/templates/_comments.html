@@ -48,29 +48,29 @@
                     {% if comment_votes.filter_by(comment_id=comment.id,
                                           voter=current_user)
                                .first().vote == 1 %}
-    <label class="label label-success glyphicon glyphicon-thumbs-up comment-vote-up voted-up">
+<label class="label label-success glyphicon glyphicon-thumbs-up comment-vote-up voted-up comment">
     {{ comment_votes.filter_by(comment_id=comment.id, vote=1).count() }}</label>
-        <label class="label label-danger glyphicon glyphicon-thumbs-down comment-vote-down">
+<label class="label label-danger glyphicon glyphicon-thumbs-down comment-vote-down comment">
     {{ -comment_votes.filter_by(comment_id=comment.id, vote=-1).count() }}</label>
 
                     {% elif comment_votes.filter_by(comment_id=comment.id,
                                             voter=current_user)
                                  .first().vote == -1 %}
-            <label class="label label-success glyphicon glyphicon-thumbs-up comment-vote-up">
+<label class="label label-success glyphicon glyphicon-thumbs-up comment-vote-up comment">
     {{ comment_votes.filter_by(comment_id=comment.id, vote=1).count() }}</label>
-<label class="label label-danger glyphicon glyphicon-thumbs-down comment-vote-down voted-down">
+<label class="label label-danger glyphicon glyphicon-thumbs-down comment-vote-down voted-down comment">
     {{ -comment_votes.filter_by(comment_id=comment.id, vote=-1).count() }}</label>
 
                     {% else %}
-            <label class="label label-success glyphicon glyphicon-thumbs-up comment-vote-up">
+<label class="label label-success glyphicon glyphicon-thumbs-up comment-vote-up comment">
     {{ comment_votes.filter_by(comment_id=comment.id, vote=1).count() }}</label>
-            <label class="label label-danger glyphicon glyphicon-thumbs-down comment-vote-down">
+<label class="label label-danger glyphicon glyphicon-thumbs-down comment-vote-down comment">
     {{ -comment_votes.filter_by(comment_id=comment.id, vote=-1).count() }}</label>
                     {% endif %}
                 {% else %}
-            <label class="label label-success glyphicon glyphicon-thumbs-up">
+    <label class="label label-success glyphicon glyphicon-thumbs-up comment">
     {{ comment_votes.filter_by(comment_id=comment.id, vote=1).count() }}</label>
-            <label class="label label-danger glyphicon glyphicon-thumbs-down">
+    <label class="label label-danger glyphicon glyphicon-thumbs-down comment">
     {{ -comment_votes.filter_by(comment_id=comment.id, vote=-1).count() }}</label>
                 {% endif %}
             {% endif %}

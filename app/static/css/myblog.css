@@ -6,6 +6,7 @@ textarea {
     margin-top: -8px;
     word-wrap: break-word;
     z-index: 2;
+    max-width: 100%;
 }
 
 a:hover {
@@ -18,9 +19,10 @@ label.label {
     z-index: 4;
 }
 
-label.glyphicon {
-    width: 40px;
-    height: 20px;
+label.glyphicon-star {
+    margin-right: 5px;
+    color: #EEDC82;
+    font-size: 120%;
 }
 
 label.label:hover {
@@ -55,6 +57,18 @@ label.voted-down {
                  0 0 75px #f24c26;
 }
 
+label.stared {
+    color: #FFD700;
+    /*text-shadow: 0 5px 5px #FCDC3B,
+                 0 0 10px #FCDC3B,
+                 0 0 15px #FCDC3B,
+                 0 0 20px #FFD700,
+                 0 0 30px #FFD700,
+                 0 0 40px #FFD700,
+                 0 0 50px #FFD700,
+                 0 0 75px #FFD700; */
+}
+
 .profile-thumbnail {
     position: absolute;
 }
@@ -83,7 +97,7 @@ div.post-tabs ul.posts {
 ul.posts li.post {
     padding: 16px;
     border-bottom: 1px solid #e0e0e0;
-    height: 250px;
+
 }
 
 ul.posts li.post:hover {
@@ -112,7 +126,6 @@ div.post-body {
     word-wrap: break-word;
     height: 150px;
     overflow: auto;
-
 }
 
 #about_me {
@@ -121,10 +134,14 @@ div.post-body {
 
 div.post-footer {
     margin: 8px;
-    margin-top: 10px;
+    margin-top: 40px;
     text-align: right;
 }
-
+div.glyphicons {
+    text-align: left;
+    position: absolute;
+    margin-left: -120px;
+}
 ul.comments {
     list-style-type: none;
     padding: 0px;
@@ -262,7 +279,6 @@ form.form-comment-edit {
     margin-top: -30px;
 }
 
-form.form-comment-edit input {
-    width: 800px;
-    height: 50px;
+form.form-comment-edit textarea {
+    max-width: 75%;
 }

@@ -9,13 +9,11 @@ $('label.post-vote-up').on('click', function() {
         $(this).text("  " + (parseInt($(this).text(), 10) + 1).toString(10));
         var vote = 1;
         $(this).addClass('voted-up');
-        if ($(this).next('label.post-vote-down')
-                   .hasClass('voted-down')){
+        if ($(this).next('label.post-vote-down').hasClass('voted-down')){
             $(this).next('label.post-vote-down').text("  " +
                 (parseInt($(this).next('label.post-vote-down')
                     .text(), 10) + 1).toString(10));
-            $(this).next('label.post-vote-down')
-                   .removeClass('voted-down');
+            $(this).next('label.post-vote-down').removeClass('voted-down');
         }
     }
 

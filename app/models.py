@@ -59,21 +59,22 @@ class Post(db.Model):
     body_html = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    votes = db.Column(db.Integer, index=True, default=0)
     comments = db.relationship('Comment', backref='post', lazy='dynamic')
     vote = db.relationship('Vote_post', backref='post', lazy="dynamic")
+    favorite = db.relationship('Favorites_post',
+                                backref=db.backref('favorites_post',
+                                lazy='joined'),
+                                lazy='dynamic',
+                                cascade='all, delete-orphan')
     deleted = db.Column(db.Boolean, default=False, index=True)
 
     def __init__(self, **kwargs):
         super(Post, self).__init__(**kwargs)
-        if self.votes is None:
-            self.votes = 0
-
         if self.deleted is None:
             self.deleted = False
 
-        db.session.add(self)
-        db.session.commit()
+            db.session.add(self)
+            db.session.commit()
 
     def ping(self):
         self.timestamp = datetime.utcnow()
@@ -163,6 +164,14 @@ class Vote_post(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+class Favorites_post(db.Model):
+    __tablename__ = 'favorites_posts'
+    id = db.Column(db.Integer, primary_key=True)
+    collector = db.Column(db.Integer, db.ForeignKey('users.id'))
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.id'))
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class Follow(db.Model):
     __tablename__ = 'follows'
     follower_id = db.Column(db.Integer, db.ForeignKey('users.id'),
@@ -199,8 +208,14 @@ class User(UserMixin, db.Model):
                                 lazy='dynamic',
                                 cascade='all, delete-orphan')
     comments = db.relationship('Comment', backref='author', lazy='dynamic')
-    vote_comments = db.relationship('Vote_comment', backref='voter', lazy='dynamic')
+    vote_comments = db.relationship('Vote_comment', backref='voter',
+                                    lazy='dynamic')
     vote_posts = db.relationship('Vote_post', backref='voter', lazy='dynamic')
+    favorites_post = db.relationship('Favorites_post',
+                                     backref=db.backref('favorite',
+                                     lazy='joined'),
+                                     lazy='dynamic',
+                                     cascade='all, delete-orphan')
 
     @staticmethod
     def generate_fake(count=100):
@@ -358,10 +373,26 @@ class User(UserMixin, db.Model):
         return self.followers.filter_by(
             follower_id=user.id).first() is not None
 
-    def is_vote(self, comment):
-        return Comment.query.filter_by(deleted=False, id=comment.id).join(Vote_comment,
-        Vote_comment.comment_id == Comment.id).filter(Vote_comment.voter_id == self.id)
+    def favorite_post(self, post):
+        if not self.is_post_stared(post):
+            fp = Favorites_post(collector=self.id, post_id=post)
+            db.session.add(fp)
+            db.session.commit()
 
+    def unfavorite_post(self, post):
+        fp = self.favorites_post.filter_by(post_id=post).first()
+        if fp:
+            db.session.delete(fp)
+            db.session.commit()
+
+    def is_post_stared(self, post):
+        return self.favorites_post.filter_by(post_id=post).first() is not None
+
+    @property
+    def stared_posts(self):
+        return Post.query.filter_by(deleted=False).join(Favorites_post,
+                                        Favorites_post.post_id == Post.id) \
+                              .filter(Favorites_post.collector == self.id)
 
     @property
     def followed_posts(self):

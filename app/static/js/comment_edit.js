@@ -45,8 +45,8 @@ $('label.for-comment-edit').on('click', function() {
 
         $(this).parents('div.comment-content')
                .append(
-"<form class='form-comment-edit'><textarea type='text' cols='90' \
-                required autofocus>"
+"<form class='form-comment-edit'><textarea \
+                                    type='text' cols='90' required autofocus>"
                 + $(this).parents('div.comment-content')
                          .find('div.comment-body')
                          .html().trim() + "</textarea></form>");
