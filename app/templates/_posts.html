@@ -3,7 +3,7 @@
     {% for post in posts %}
 
     <li class="post">
-        <div class="for-post-del" data-id="{{ post.id }}">
+        <div class="post-data" data-id="{{ post.id }}">
 
         <div class="post-thumbnail">
             <a href="{{ url_for('.user', username=post.author.username) }}">
@@ -34,59 +34,44 @@
 
             </div>
             <div class="post-footer">
-                <div class="glyphicons">
+                <div class="glyphicons-posts">
                 {% if current_user.is_authenticated %}
                 {% if current_user.is_post_stared(post.id) %}
 <label class="glyphicon glyphicon-star stared"> </label>
                 {% else %}
     <label class="glyphicon glyphicon-star"> </label>
                 {% endif %}
-                    {% if current_user != post.author %}
-                        {% if post_votes.filter_by(post_id=post.id,
-                                              voter=current_user)
-                                   .first().vote == 1 %}
-<label class="label label-success glyphicon glyphicon-thumbs-up post-vote-up voted-up">
-            {{ post_votes.filter_by(post_id=post.id, vote=1).count() }}</label>
-<label class="label label-danger glyphicon glyphicon-thumbs-down post-vote-down">
-            {{ -post_votes.filter_by(post_id=post.id, vote=-1).count() }}</label>
-
-                        {% elif post_votes.filter_by(post_id=post.id,
-                                                voter=current_user)
-                                     .first().vote == -1 %}
-<label class="label label-success glyphicon glyphicon-thumbs-up post-vote-up">
-            {{ post_votes.filter_by(post_id=post.id, vote=1).count() }}</label>
-<label class="label label-danger glyphicon glyphicon-thumbs-down post-vote-down voted-down">
-            {{ -post_votes.filter_by(post_id=post.id, vote=-1).count() }}</label>
-
-                        {% else %}
-<label class="label label-success glyphicon glyphicon-thumbs-up post-vote-up">
-            {{ post_votes.filter_by(post_id=post.id, vote=1).count() }}</label>
-<label class="label label-danger glyphicon glyphicon-thumbs-down post-vote-down">
-            {{ -post_votes.filter_by(post_id=post.id, vote=-1).count() }}</label>
-                        {% endif %}
-                    {% else %}
-            <label class="label label-success glyphicon glyphicon-thumbs-up">
-            {{ post_votes.filter_by(post_id=post.id, vote=1).count() }}</label>
-            <label class="label label-danger glyphicon glyphicon-thumbs-down">
-            {{ -post_votes.filter_by(post_id=post.id, vote=-1).count() }}</label>
-                    {% endif %}
+    <label class="label label-success glyphicon glyphicon-thumbs-up post
+{% if current_user != post.author %}post-vote-up{% endif %}
+{% if post_votes.filter_by(post_id=post.id,
+                      voter=current_user) .first().vote == 1 %}
+                      voted-up{% endif %}"
+                      data-placement="top" data-html="true">
+    {{ post_votes.filter_by(post_id=post.id, vote=1).count() }}</label>
+    <label class="label label-danger glyphicon glyphicon-thumbs-down post
+{% if current_user != post.author %}post-vote-down{% endif %}
+{% if post_votes.filter_by(post_id=post.id,
+                        voter=current_user).first().vote == -1 %}
+                        voted-down{% endif %}"
+                        data-placement="top" data-html="true">
+    {{ -post_votes.filter_by(post_id=post.id, vote=-1).count() }}</label>
                 {% endif %}
             </div>
                 <a href="{{ url_for('.post', id=post.id) }}">
-                    <span class="label label-info">Постоянная ссылка</span>
+                    <span class="label label-info">К посту</span>
                 </a>
                 <a href="{{ url_for('.post', id=post.id) }}#comments">
                     <span class="label label-primary">
-                            {{ post.comments.filter_by(deleted=False).count() }}
-                            {% if post.comments.filter_by(deleted=False).count() == 1 %}
-                            комментарий</span>
-                            {% elif post.comments.filter_by(deleted=False).count() >= 2 and
-                            post.comments.filter_by(deleted=False).count() <= 4 %}
-                            комментария</span>
-                            {% else %}
-                            комментариев</span>
-                            {% endif %}
-                    </a>
+                {{ post.comments.filter_by(deleted=False).count() }}
+                {% if post.comments.filter_by(deleted=False).count() == 1 %}
+                комментарий</span>
+                {% elif post.comments.filter_by(deleted=False).count() >= 2 and
+                post.comments.filter_by(deleted=False).count() <= 4 %}
+                комментария</span>
+                {% else %}
+                комментариев</span>
+                {% endif %}
+                </a>
                 {% if current_user == post.author %}
                 <a href="{{ url_for('.edit', id=post.id) }}">
                     <span class="label label-primary">Редактировать</span>

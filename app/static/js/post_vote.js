@@ -1,4 +1,5 @@
 $('label.post-vote-up').on('click', function() {
+    var ths = this
     if ($(this).hasClass('voted-up')) {
         $(this).text("  " + (parseInt($(this).text(), 10) - 1).toString(10));
         $(this).removeClass('voted-up')
@@ -9,11 +10,11 @@ $('label.post-vote-up').on('click', function() {
         $(this).text("  " + (parseInt($(this).text(), 10) + 1).toString(10));
         var vote = 1;
         $(this).addClass('voted-up');
-        if ($(this).next('label.post-vote-down').hasClass('voted-down')){
-            $(this).next('label.post-vote-down').text("  " +
-                (parseInt($(this).next('label.post-vote-down')
-                    .text(), 10) + 1).toString(10));
-            $(this).next('label.post-vote-down').removeClass('voted-down');
+        if ($(this).siblings('label.post-vote-down').hasClass('voted-down')){
+            $(this).siblings('label.post-vote-down')
+                   .text("  " + (parseInt($(this).siblings('label.post-vote-down')
+                        .text(), 10) + 1).toString(10));
+            $(this).siblings('label.post-vote-down').removeClass('voted-down');
         }
     }
 
@@ -21,17 +22,31 @@ $('label.post-vote-up').on('click', function() {
         type: 'POST',
         url: '/post_vote/',
         data:  {
-            'post': $(this).parents('div.for-post-del').attr('data-id'),
+            'post': $(this).parents('div.post-data').attr('data-id'),
             'vote': vote
         },
         success: function(data) {
-            console.log(data);
+            var vote = 1;
+            $.ajax({
+                type: "PUT",
+                url: "/voters/",
+                data: {
+                    'post': $(ths).parents('div.post-data').attr('data-id'),
+                    'vote': vote
+                },
+                success: function(data) {
+                    $(ths).attr({title: data.message})
+                          .popover("fixTitle")
+                          .popover("show")
+                }
+            });
         }
     });
 
 });
 
 $('label.post-vote-down').on('click', function() {
+    var ths = this
     if ($(this).hasClass('voted-down')) {
         $(this).text("  " + (parseInt($(this).text(), 10) + 1).toString(10));
         $(this).removeClass('voted-down');
@@ -41,13 +56,13 @@ $('label.post-vote-down').on('click', function() {
         var vote = -1;
         $(this).text("  " + (parseInt($(this).text(), 10) - 1).toString(10));
         $(this).addClass('voted-down');
-        if ($(this).prev('label.post-vote-up')
+        if ($(this).siblings('label.post-vote-up')
                    .hasClass('voted-up')) {
-            $(this).prev('label.post-vote-up')
+            $(this).siblings('label.post-vote-up')
                    .removeClass('voted-up');
-            $(this).prev('label.post-vote-up').text("  " +
-                (parseInt($(this).prev('label.post-vote-up')
-                .text(), 10) - 1).toString(10));
+            $(this).siblings('label.post-vote-up')
+            .text("  " + (parseInt($(this).siblings('label.post-vote-up')
+                                          .text(), 10) - 1).toString(10));
         }
     }
 
@@ -55,11 +70,62 @@ $('label.post-vote-down').on('click', function() {
         type: 'POST',
         url: '/post_vote/',
         data:  {
-            'post': $(this).parents('div.for-post-del').attr('data-id'),
+            'post': $(this).parents('div.post-data').attr('data-id'),
             'vote': vote
         },
         success: function(data) {
-            console.log(data);
+            var vote = -1;
+            $.ajax({
+                type: "PUT",
+                url: "/voters/",
+                data: {
+                    'post': $(ths).parents('div.post-data').attr('data-id'),
+                    'vote': vote
+                },
+                success: function(data) {
+                    $(ths).attr({title: data.message})
+                          .popover("fixTitle")
+                          .popover("show")
+                }
+            });
         }
     });
+});
+
+$('label.post').hover(function() {
+    var ths = this;
+
+    if ($(this).hasClass("glyphicon-thumbs-up")) {
+        var vote = 1;
+    } else if ($(this).hasClass("glyphicon-thumbs-down")) {
+        vote = -1;
+    }
+
+    $.ajax({
+        type: 'PUT',
+        url: '/voters/',
+        data:  {
+            'post': $(this).parents('div.post-data').attr('data-id'),
+            'vote': vote
+        },
+        success: function(data) {
+            $(ths).attr({title: data.message})
+                   .popover("fixTitle")
+                   .popover("show")
+        }
+    });
+},
+function() {
+    var ths = this;
+    setTimeout(function() {
+        if ($('div.popover:hover').length === 0) {
+            $(ths).popover("destroy");
+        } else {
+            $(ths).next('div.popover').mouseleave(function() {
+                if ($(ths).next('label.post:hover').length === 0) {
+                    $(ths).popover("destroy");
+                }
+            });
+        }
+    }, 100)
 });

@@ -263,23 +263,44 @@ def comment_vote():
     return jsonify(data)
 
 
-@main.route('/voters/', methods=['POST'])
+@main.route('/voters/', methods=['PUT'])
 def voters():
     data = {'status': 0, 'message': 'Invlaid method: {}'.format(request.method)}
-    if request.method == 'POST':
-        message = []
-        if request.form['vote'] == "1":
-            comment_voters = Vote_comment.query.filter_by(
-                comment_id=request.form['comment'], vote=1).all()
-            for voter in comment_voters:
-                message.append(voter.voter_id)
-        elif request.form['vote'] == "-1":
-            comment_voters = Vote_comment.query.filter_by(
-                comment_id=request.form['comment'], vote=-1).all()
-            for voter in comment_voters:
-                message.append(voter.voter_id)
-        elif request.form['post_up']:
-            pass
+    if request.method == 'PUT':
+        message = "<table>"
+        row_count = 3
+        if 'comment' in request.form:
+            voters = User.query.join(Vote_comment,
+                     Vote_comment.voter_id == User.id) \
+                    .filter(Vote_comment.comment_id == request.form['comment'],
+                          Vote_comment.vote == request.form['vote']).all()
+
+        elif 'post' in request.form:
+            voters = User.query.join(Vote_post,
+                Vote_post.voter_id == User.id) \
+                    .filter(Vote_post.post_id == request.form['post'],
+                        Vote_post.vote == request.form['vote']).all()
+
+        if voters:
+            for voter in voters:
+                if row_count % 3 == 0:
+                    message += "<tr>"
+                row_count += 1
+
+                message += """
+<td class='voters'>
+<img src="http://www.gravatar.com/avatar/{1}?s=40&amp;d=identicon&amp;r=g">
+</br>
+    <a href="/user/{0}">
+    {0}
+    </a>
+</td>""".format(voter.username, voter.avatar_hash)
+                if row_count % 6 == 0 or voter == voters[-1]:
+                    message += "</tr>"
+                if voter == voters[-1]:
+                    message += "</table>"
+        else:
+            message += "<p style='color: black;'>Тут пока нет голосов.</p></table>"
 
         data = {'status': 1, 'message': message}
     return jsonify(data)

@@ -1,5 +1,5 @@
 $("label.post-del").on('click', function(){
-        $(this).parents("div.for-post-del").css({'webkit-filtre': 'blur(5px)',
+        $(this).parents("div.post-data").css({'webkit-filtre': 'blur(5px)',
                                             'filter': 'blur(5px)',
                                             'pointer-events': 'none'})
                                       .fadeTo(500, 0.4);
@@ -7,7 +7,7 @@ $("label.post-del").on('click', function(){
             "<label class='to-show label label-lg label-success'> \
                             <h6 class='label-'>Восстановить</h6></label>");
         $(this).parents("li.post").children('label.to-show').hide().fadeIn(600);;
-        var post_id = $(this).parents("div.for-post-del").attr('data-id');
+        var post_id = $(this).parents("div.post-data").attr('data-id');
 
         $.ajax({
             type: "DELETE",
@@ -23,7 +23,7 @@ $("label.post-del").on('click', function(){
         });
 
 $("label.to-show").on('click', function() {
-    var divForDel = $(this).parent("li.post").children("div.for-post-del");
+    var divForDel = $(this).parent("li.post").children("div.post-data");
     $(divForDel).css({'webkit-filtre': 'blur(0px)', 'filter': 'blur(0px)',
                      'pointer-events': 'auto'})
                 .fadeTo(500, 1);

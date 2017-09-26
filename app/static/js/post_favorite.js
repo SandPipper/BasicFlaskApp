@@ -10,10 +10,7 @@ $('label.glyphicon-star').on('click', function() {
         type: 'POST',
         url: '/post_star/',
         data: {
-            'post': $(this).parents('div.for-post-del').attr('data-id')
-        },
-        success: function(data) {
-            console.log(data);
+            'post': $(this).parents('div.post-data').attr('data-id')
         }
     });
 });

@@ -32,48 +32,39 @@
                     {% endif %}
                 {% endif %}
             </div>
+        <div class="comment-footer">
+            <div class="glyphicons-comments">
+            {% if current_user.is_authenticated %}
+
+
+<label class="label label-success glyphicon glyphicon-thumbs-up comment
+{% if current_user != comment.author %}comment-vote-up{% endif %}
+{% if comment_votes.filter_by(comment_id=comment.id,
+                      voter=current_user).first().vote == 1 %}
+                      voted-up{% endif %}"
+                      data-placement="top" data-html="true">
+{{ comment_votes.filter_by(comment_id=comment.id, vote=1).count() }}</label>
+<label class="label label-danger glyphicon glyphicon-thumbs-down comment
+{% if current_user != comment.author %}comment-vote-down{% endif %}
+{% if comment_votes.filter_by(comment_id=comment.id,
+                              voter=current_user).first().vote == -1 %}
+                              voted-down{% endif %}"
+                              data-placement="top" data-html="true">
+{{ -comment_votes.filter_by(comment_id=comment.id, vote=-1).count() }}</label>
+            {% endif %}
+        </div>
             {% if moderate %}
             <br>
             {% if comment.disabled %}
-            <a class="btn btn-default btn-xs" href="{{ url_for('.moderate_enable',
+            <a class="btn btn-default btn-xs"
+                href="{{ url_for('.moderate_enable',
                 id=comment.id, page=page) }}">Разрешить</a>
             {% else %}
-            <a class="btn btn-danger btn-xs" href="{{ url_for('.moderate_disabled',
+            <a class="btn btn-danger btn-xs"
+                href="{{ url_for('.moderate_disabled',
                 id=comment.id, page=page) }}">Запретить</a>
             {% endif %}
         {% endif %}
-        <div class="comment-footer">
-            {% if current_user.is_authenticated %}
-                {% if current_user != comment.author %}
-                    {% if comment_votes.filter_by(comment_id=comment.id,
-                                          voter=current_user)
-                               .first().vote == 1 %}
-<label class="label label-success glyphicon glyphicon-thumbs-up comment-vote-up voted-up comment">
-    {{ comment_votes.filter_by(comment_id=comment.id, vote=1).count() }}</label>
-<label class="label label-danger glyphicon glyphicon-thumbs-down comment-vote-down comment">
-    {{ -comment_votes.filter_by(comment_id=comment.id, vote=-1).count() }}</label>
-
-                    {% elif comment_votes.filter_by(comment_id=comment.id,
-                                            voter=current_user)
-                                 .first().vote == -1 %}
-<label class="label label-success glyphicon glyphicon-thumbs-up comment-vote-up comment">
-    {{ comment_votes.filter_by(comment_id=comment.id, vote=1).count() }}</label>
-<label class="label label-danger glyphicon glyphicon-thumbs-down comment-vote-down voted-down comment">
-    {{ -comment_votes.filter_by(comment_id=comment.id, vote=-1).count() }}</label>
-
-                    {% else %}
-<label class="label label-success glyphicon glyphicon-thumbs-up comment-vote-up comment">
-    {{ comment_votes.filter_by(comment_id=comment.id, vote=1).count() }}</label>
-<label class="label label-danger glyphicon glyphicon-thumbs-down comment-vote-down comment">
-    {{ -comment_votes.filter_by(comment_id=comment.id, vote=-1).count() }}</label>
-                    {% endif %}
-                {% else %}
-    <label class="label label-success glyphicon glyphicon-thumbs-up comment">
-    {{ comment_votes.filter_by(comment_id=comment.id, vote=1).count() }}</label>
-    <label class="label label-danger glyphicon glyphicon-thumbs-down comment">
-    {{ -comment_votes.filter_by(comment_id=comment.id, vote=-1).count() }}</label>
-                {% endif %}
-            {% endif %}
 
 
             {% if current_user == comment.author and not comment.disabled %}

@@ -37,13 +37,14 @@ def create_app(config_name):
     mysql_engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'],
                    execution_options={'compiled_cache': query_cache})
     mysql_engine.execute('CREATE DATABASE IF NOT EXISTS {}\
-                         CHARACTER SET utf8 COLLATE utf8_unicode_ci'\
-                         .format(app.config['DB_NAME']))
+                          CHARACTER SET utf8 COLLATE utf8_unicode_ci'\
+                        .format(app.config['DB_NAME']))
+
 
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://{}:{}@localhost/{}?charset=utf8mb4'\
-                               .format(os.environ['DB_USERNAME'],
-                                       os.environ['DB_PASSWORD'],
-                                       app.config['DB_NAME'])
+                                            .format(os.environ['DB_USERNAME'],
+                                                    os.environ['DB_PASSWORD'],
+                                                    app.config['DB_NAME'])
 
 
     from .main import main as main_blueprint
