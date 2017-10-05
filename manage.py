@@ -9,7 +9,7 @@ from flask_migrate import Migrate, MigrateCommand
 app = create_app(os.environ['FLASK_CONFIG'])
 manager = Manager(app)
 migrate = Migrate(app, db)
-
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 def make_shell_context():
     return dict(app=app, db=db, User=User, Role=Role, Follow=Follow,

@@ -1,6 +1,15 @@
 import os
 
 
+class Auth:
+    CLIENT_ID = os.environ['GOOGLE_CLIENT_ID']
+    CLIENT_SECRET = os.environ['GOOGLE_CLIENT_SECRET']
+    REDIRECT_URI = 'http://localhost:5000/auth/login_auth'
+    AUTH_URI = 'https://accounts.google.com/o/oauth2/auth'
+    TOKEN_URI = 'https://accounts.google.com/o/oauth2/token'
+    SCOPE = ['profile', 'email']
+
+
 class Config:
 
     SECRET_KEY = os.environ['SECRET_KEY']
