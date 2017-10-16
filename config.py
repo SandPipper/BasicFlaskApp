@@ -1,4 +1,5 @@
 import os
+import datetime
 
 
 class Auth:
@@ -20,6 +21,7 @@ class Config:
                                .format(os.environ['DB_USERNAME'],
                                        os.environ['DB_PASSWORD'])
     SQLALCHEMY_TRACK_MODIFICATIONS = True
+    REMEMBER_COOKIE_DURATION = datetime.timedelta(days=30)
     BLOG_POSTS_PER_PAGE = 20
     BLOG_FOLLOWERS_PER_PAGE = 50
     BLOG_COMMENTS_PER_PAGE = 30

@@ -1,0 +1,30 @@
+{
+  "name": "basicflaskapp",
+  "version": "1.0.0",
+  "description": "This is basic forum on flask with MySQL, JQuery and bootstrap.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "webpack": "^3.7.1"
+  },
+  "devDependencies": {
+    "webpack": "^3.7.1"
+  },
+  "scripts": {
+    "test": "echo \\\"Error: no test specified\\\" && exit 1",
+    "build": "webpack -p"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SandPipper/BasicFlaskApp.git"
+  },
+  "author": "Alexander Kulyk",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SandPipper/BasicFlaskApp/issues"
+  },
+  "homepage": "https://github.com/SandPipper/BasicFlaskApp#readme",
+  "keywords": []
+}

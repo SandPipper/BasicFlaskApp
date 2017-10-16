@@ -1,7 +1,3 @@
-body {
-  /*background: linear-gradient(to top, #03477c, #bbdaf9) fixed;*/
- }
-
 textarea {
     word-wrap: break-word;
     max-width: 100%;
@@ -15,7 +11,7 @@ a:hover {
     text-decoration: none;
 }
 
-label.label {
+label.to-show {
     transition: all 1.5s;
     margin-left: 2px;
 }
@@ -60,14 +56,6 @@ label.voted-down {
 
 label.stared {
     color: #FFD700;
-    /*text-shadow: 0 5px 5px #FCDC3B,
-                 0 0 10px #FCDC3B,
-                 0 0 15px #FCDC3B,
-                 0 0 20px #FFD700,
-                 0 0 30px #FFD700,
-                 0 0 40px #FFD700,
-                 0 0 50px #FFD700,
-                 0 0 75px #FFD700; */
 }
 
 .profile-thumbnail {
